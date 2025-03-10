@@ -107,13 +107,13 @@ class CircleModuleSwift: NSObject {
                 
                 // Determine chain
                 let chainObj: Chain
-                switch chain.lowercased() {
-                case "sepolia":
-                    chainObj = Sepolia
-                case "ethereum", "mainnet":
-                    chainObj = Ethereum
+                switch chain {
+                case "polygonAmoy":
+                    chainObj = PolygonAmoy
+                case "polygon":
+                    chainObj = Polygon
                 default:
-                    chainObj = Sepolia // Default to Sepolia testnet
+                    chainObj = PolygonAmoy // Default to Polygon Amoy testnet
                 }
                 
                 // Create bundler client
@@ -173,16 +173,98 @@ class CircleModuleSwift: NSObject {
                                 to: to,
                                 value: weiValue
                             )
-                        ]
+                        ],
+                        paymaster: Paymaster.True()
                     )
                     
-                    // Return transaction hash
-                    resolver(["hash": hash])
+                    // Wait for transaction receipt
+                    let receipt = try await bundlerClient.waitForUserOperationReceipt(
+                        userOpHash: hash
+                    )
+                    
+                    // Return transaction hash and receipt
+                    let result: [String: Any] = [
+                        "hash": hash,
+                        "transactionHash": receipt.transactionHash
+                    ]
+                    
+                    resolver(result)
                 } catch {
                     rejecter("PARSE_VALUE_ERROR", "Failed to parse ETH value: \(error.localizedDescription)", error)
                 }
             } catch {
                 rejecter("SEND_OPERATION_ERROR", error.localizedDescription, error)
+            }
+        }
+    }
+    
+    @objc func sendUSDCWithAccountId(_ accountId: String,
+                                   to: String,
+                                   amount: String,
+                                   chainId: NSString,
+                                   resolver: @escaping RCTPromiseResolveBlock,
+                                   rejecter: @escaping RCTPromiseRejectBlock) {
+        Task {
+            do {
+                // Get the stored account and client
+                guard let bundlerClient = bundlerClients[accountId],
+                      let account = smartAccounts[accountId] else {
+                    throw NSError(domain: "CircleModule", code: 2, userInfo: [NSLocalizedDescriptionKey: "Invalid account ID"])
+                }
+                
+                // Determine token based on chain
+                let tokenName: String
+                switch chainId as String {
+                case "polygon":
+                    tokenName = PolygonToken.USDC.name
+                case "polygonAmoy":
+                    tokenName = PolygonAmoyToken.USDC.name
+                default:
+                    throw NSError(domain: "CircleModule", code: 4, userInfo: [NSLocalizedDescriptionKey: "Unsupported chain for USDC"])
+                }
+                
+                // Convert amount to token units (USDC has 6 decimals)
+                guard let amountDecimal = Decimal(string: amount) else {
+                    throw NSError(domain: "CircleModule", code: 3, userInfo: [NSLocalizedDescriptionKey: "Invalid amount format"])
+                }
+                
+                let usdcDecimals: Float = pow(10, 6)
+                let tokenAmount = BigInt(NSDecimalNumber(decimal: amountDecimal * Decimal(usdcDecimals)).intValue)
+                
+                // Use Utils.encodeTransfer to encode the transfer call
+                let result = Utils.encodeTransfer(
+                    to: to,
+                    token: tokenName,
+                    amount: tokenAmount
+                )
+                
+                // Send user operation
+                let hash = try await bundlerClient.sendUserOperation(
+                    account: account,
+                    calls: [
+                        EncodeCallDataArg(
+                            to: result.to,
+                            value: BigInt(0),
+                            data: result.data
+                        )
+                    ],
+                    paymaster: Paymaster.True()
+                )
+                
+                // Wait for transaction receipt
+                let receipt = try await bundlerClient.waitForUserOperationReceipt(
+                    userOpHash: hash
+                )
+                
+                // Return transaction hash and receipt
+                let result: [String: Any] = [
+                    "hash": hash,
+                    "transactionHash": receipt.transactionHash
+                ]
+                
+                resolver(result)
+            } catch {
+                rejecter("SEND_USDC_ERROR", error.localizedDescription, error)
             }
         }
     }

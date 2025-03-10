@@ -69,6 +69,23 @@ RCT_EXPORT_METHOD(sendUserOperation:(NSString *)accountId
                                                           rejecter:reject];
 }
 
+// Token transfer methods
+RCT_EXPORT_METHOD(sendUSDC:(NSString *)accountId
+                  to:(NSString *)to
+                  amount:(NSString *)amount
+                  chainId:(NSString *)chainId
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject) {
+  
+  // Call the Swift implementation
+  [[CircleModuleSwift shared] sendUSDCWithAccountId:accountId
+                                                 to:to
+                                             amount:amount
+                                            chainId:chainId
+                                           resolver:resolve
+                                           rejecter:reject];
+}
+
 // Memory management methods
 RCT_EXPORT_METHOD(releaseCredential:(NSString *)credentialId
                   resolver:(RCTPromiseResolveBlock)resolve

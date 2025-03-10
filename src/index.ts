@@ -21,7 +21,15 @@ export interface SmartAccount {
 }
 
 export interface TransactionResult {
+  /**
+   * The user operation hash
+   */
   hash: string;
+  
+  /**
+   * The actual transaction hash on the blockchain
+   */
+  transactionHash: string;
 }
 
 // Get the native module
@@ -61,7 +69,7 @@ const CircleWallet = {
    * Create a smart account for the user
    * @param clientKey Circle API client key
    * @param clientUrl Circle API client URL
-   * @param chain Blockchain network (e.g., "sepolia", "ethereum")
+   * @param chain Blockchain network (e.g., "polygonAmoy", "polygon")
    * @param credential User credential from createUser or loginUser
    * @returns Promise resolving to smart account object with accountId (internal reference) and address (blockchain address)
    */
@@ -75,11 +83,11 @@ const CircleWallet = {
   },
 
   /**
-   * Send a transaction from the smart account
+   * Send a native token transaction (e.g., MATIC) from the smart account
    * @param accountId Internal reference ID returned from createSmartAccount (NOT the blockchain address)
    * @param to Recipient address
-   * @param value Amount in ETH to send
-   * @returns Promise resolving to transaction result
+   * @param value Amount in MATIC to send
+   * @returns Promise resolving to transaction result with hash and transactionHash
    */
   sendTransaction: (
     accountId: string,
@@ -87,6 +95,23 @@ const CircleWallet = {
     value: string
   ): Promise<TransactionResult> => {
     return CircleModule.sendUserOperation(accountId, to, value);
+  },
+
+  /**
+   * Send USDC from the smart account
+   * @param accountId Internal reference ID returned from createSmartAccount (NOT the blockchain address)
+   * @param to Recipient address
+   * @param amount Amount of USDC to send (in USDC units, not wei)
+   * @param chainId The chain ID or name (e.g., "polygon", "polygonAmoy")
+   * @returns Promise resolving to transaction result with hash and transactionHash
+   */
+  sendUSDC: (
+    accountId: string,
+    to: string,
+    amount: string,
+    chainId: string
+  ): Promise<TransactionResult> => {
+    return CircleModule.sendUSDC(accountId, to, amount, chainId);
   },
 
   /**

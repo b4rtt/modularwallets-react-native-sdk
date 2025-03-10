@@ -8,6 +8,7 @@ export default function CircleWalletDemo() {
   const [clientUrl, setClientUrl] = useState('https://api.circle.com');
   const [recipientAddress, setRecipientAddress] = useState('0x1234567890123456789012345678901234567890');
   const [amount, setAmount] = useState('0.01');
+  const [usdcAmount, setUsdcAmount] = useState('10'); // 10 USDC
   
   const [credential, setCredential] = useState<Credential | null>(null);
   const [account, setAccount] = useState<SmartAccount | null>(null);
@@ -51,7 +52,7 @@ export default function CircleWalletDemo() {
       const result = await CircleWallet.createSmartAccount(
         clientKey,
         clientUrl,
-        'sepolia', // Using Sepolia testnet
+        'polygonAmoy', // Using Polygon Amoy testnet
         credential
       );
       setAccount(result);
@@ -78,9 +79,32 @@ export default function CircleWalletDemo() {
         amount
       );
       setTransactionResult(result);
-      Alert.alert('Success', `Transaction sent: ${result.hash}`);
+      Alert.alert('Success', `Transaction sent: ${result.hash}\nTransaction Hash: ${result.transactionHash}`);
     } catch (error) {
       Alert.alert('Error', `Failed to send transaction: ${error}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sendUSDC = async () => {
+    if (!account) {
+      Alert.alert('Error', 'Please create a smart account first');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const result = await CircleWallet.sendUSDC(
+        account.accountId,
+        recipientAddress,
+        usdcAmount,
+        'polygonAmoy' // Using Polygon Amoy testnet
+      );
+      setTransactionResult(result);
+      Alert.alert('Success', `USDC transaction sent: ${result.hash}\nTransaction Hash: ${result.transactionHash}`);
+    } catch (error) {
+      Alert.alert('Error', `Failed to send USDC: ${error}`);
     } finally {
       setLoading(false);
     }
@@ -205,6 +229,8 @@ export default function CircleWalletDemo() {
       
       <View style={styles.separator} />
       
+      <Text style={styles.sectionTitle}>Send Native Token (MATIC)</Text>
+      
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Recipient Address:</Text>
         <TextInput
@@ -216,20 +242,43 @@ export default function CircleWalletDemo() {
       </View>
       
       <View style={styles.inputContainer}>
-        <Text style={styles.label}>Amount (ETH):</Text>
+        <Text style={styles.label}>Amount (MATIC):</Text>
         <TextInput
           style={styles.input}
           value={amount}
           onChangeText={setAmount}
-          placeholder="Enter amount in ETH"
+          placeholder="Enter amount in MATIC"
           keyboardType="decimal-pad"
         />
       </View>
       
       <View style={styles.buttonContainer}>
         <Button
-          title="Send Transaction"
+          title="Send MATIC"
           onPress={sendTransaction}
+          disabled={loading || !account}
+        />
+      </View>
+      
+      <View style={styles.separator} />
+      
+      <Text style={styles.sectionTitle}>Send USDC</Text>
+      
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>Amount (USDC):</Text>
+        <TextInput
+          style={styles.input}
+          value={usdcAmount}
+          onChangeText={setUsdcAmount}
+          placeholder="Enter USDC amount"
+          keyboardType="decimal-pad"
+        />
+      </View>
+      
+      <View style={styles.buttonContainer}>
+        <Button
+          title="Send USDC"
+          onPress={sendUSDC}
           disabled={loading || !account}
         />
       </View>
@@ -237,7 +286,8 @@ export default function CircleWalletDemo() {
       {transactionResult && (
         <View style={styles.resultContainer}>
           <Text style={styles.resultTitle}>Transaction Result:</Text>
-          <Text>Hash: {transactionResult.hash}</Text>
+          <Text>User Operation Hash: {transactionResult.hash}</Text>
+          <Text>Transaction Hash: {transactionResult.transactionHash}</Text>
         </View>
       )}
     </ScrollView>
@@ -255,6 +305,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
   },
   inputContainer: {
     marginBottom: 15,
