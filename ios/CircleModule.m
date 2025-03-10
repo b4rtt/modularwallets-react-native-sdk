@@ -55,18 +55,39 @@ RCT_EXPORT_METHOD(createSmartAccount:(NSString *)clientKey
                                                   rejecter:reject];
 }
 
-RCT_EXPORT_METHOD(sendUserOperation:(NSString *)accountAddress
+RCT_EXPORT_METHOD(sendUserOperation:(NSString *)accountId
                   to:(NSString *)to
                   value:(NSString *)value
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject) {
   
   // Call the Swift implementation
-  [[CircleModuleSwift shared] sendUserOperationWithAccountAddress:accountAddress
+  [[CircleModuleSwift shared] sendUserOperationWithAccountId:accountId
                                                           to:to
                                                           value:value
                                                           resolver:resolve
                                                           rejecter:reject];
+}
+
+// Memory management methods
+RCT_EXPORT_METHOD(releaseCredential:(NSString *)credentialId
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject) {
+  
+  // Call the Swift implementation
+  [[CircleModuleSwift shared] releaseCredential:credentialId
+                                       resolver:resolve
+                                       rejecter:reject];
+}
+
+RCT_EXPORT_METHOD(releaseAccount:(NSString *)accountId
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject) {
+  
+  // Call the Swift implementation
+  [[CircleModuleSwift shared] releaseAccount:accountId
+                                    resolver:resolve
+                                    rejecter:reject];
 }
 
 @end 

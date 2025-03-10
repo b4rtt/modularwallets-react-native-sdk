@@ -55,7 +55,7 @@ export default function CircleWalletDemo() {
         credential
       );
       setAccount(result);
-      Alert.alert('Success', `Smart account created: ${result.address}`);
+      Alert.alert('Success', `Smart account created with blockchain address: ${result.address}`);
     } catch (error) {
       Alert.alert('Error', `Failed to create smart account: ${error}`);
     } finally {
@@ -71,8 +71,9 @@ export default function CircleWalletDemo() {
 
     try {
       setLoading(true);
+      // Note: We use the accountId (internal reference) here, not the blockchain address
       const result = await CircleWallet.sendTransaction(
-        account.accountId,
+        account.accountId, // This is the internal reference ID, not the blockchain address
         recipientAddress,
         amount
       );
@@ -80,6 +81,50 @@ export default function CircleWalletDemo() {
       Alert.alert('Success', `Transaction sent: ${result.hash}`);
     } catch (error) {
       Alert.alert('Error', `Failed to send transaction: ${error}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const releaseCredential = async () => {
+    if (!credential) {
+      Alert.alert('Error', 'No credential to release');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const result = await CircleWallet.releaseCredential(credential.credentialId);
+      if (result) {
+        setCredential(null);
+        Alert.alert('Success', 'Credential released successfully');
+      } else {
+        Alert.alert('Warning', 'Credential not found or already released');
+      }
+    } catch (error) {
+      Alert.alert('Error', `Failed to release credential: ${error}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const releaseAccount = async () => {
+    if (!account) {
+      Alert.alert('Error', 'No account to release');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const result = await CircleWallet.releaseAccount(account.accountId);
+      if (result) {
+        setAccount(null);
+        Alert.alert('Success', 'Account released successfully');
+      } else {
+        Alert.alert('Warning', 'Account not found or already released');
+      }
+    } catch (error) {
+      Alert.alert('Error', `Failed to release account: ${error}`);
     } finally {
       setLoading(false);
     }
@@ -120,6 +165,9 @@ export default function CircleWalletDemo() {
           <Text style={styles.resultTitle}>User Credential:</Text>
           <Text>Credential ID: {credential.credentialId}</Text>
           <Text>User Name: {credential.userName}</Text>
+          <View style={styles.buttonContainer}>
+            <Button title="Release Credential" onPress={releaseCredential} disabled={loading} />
+          </View>
         </View>
       )}
       
@@ -146,8 +194,12 @@ export default function CircleWalletDemo() {
       {account && (
         <View style={styles.resultContainer}>
           <Text style={styles.resultTitle}>Smart Account:</Text>
-          <Text>Account ID: {account.accountId}</Text>
-          <Text>Address: {account.address}</Text>
+          <Text>Internal Account ID: {account.accountId}</Text>
+          <Text>Blockchain Address: {account.address}</Text>
+          <Text style={styles.note}>Note: The Account ID is used internally by the plugin and is not your blockchain address.</Text>
+          <View style={styles.buttonContainer}>
+            <Button title="Release Account" onPress={releaseAccount} disabled={loading} />
+          </View>
         </View>
       )}
       
@@ -241,5 +293,11 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#ddd',
     marginVertical: 20,
+  },
+  note: {
+    fontStyle: 'italic',
+    fontSize: 12,
+    marginTop: 5,
+    color: '#666',
   },
 }); 

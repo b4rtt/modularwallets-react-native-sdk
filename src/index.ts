@@ -7,7 +7,16 @@ export interface Credential {
 }
 
 export interface SmartAccount {
+  /**
+   * Internal identifier used by the plugin to reference the account.
+   * This is NOT the blockchain address, but a UUID used to look up the account in memory.
+   */
   accountId: string;
+  
+  /**
+   * The actual blockchain address of the smart account.
+   * This is the address that will appear on the blockchain.
+   */
   address: string;
 }
 
@@ -54,7 +63,7 @@ const CircleWallet = {
    * @param clientUrl Circle API client URL
    * @param chain Blockchain network (e.g., "sepolia", "ethereum")
    * @param credential User credential from createUser or loginUser
-   * @returns Promise resolving to smart account object
+   * @returns Promise resolving to smart account object with accountId (internal reference) and address (blockchain address)
    */
   createSmartAccount: (
     clientKey: string,
@@ -67,7 +76,7 @@ const CircleWallet = {
 
   /**
    * Send a transaction from the smart account
-   * @param accountId Smart account ID from createSmartAccount
+   * @param accountId Internal reference ID returned from createSmartAccount (NOT the blockchain address)
    * @param to Recipient address
    * @param value Amount in ETH to send
    * @returns Promise resolving to transaction result
@@ -78,6 +87,24 @@ const CircleWallet = {
     value: string
   ): Promise<TransactionResult> => {
     return CircleModule.sendUserOperation(accountId, to, value);
+  },
+
+  /**
+   * Release a credential from memory when it's no longer needed
+   * @param credentialId The credential ID to release
+   * @returns Promise resolving to a boolean indicating whether the credential was found and released
+   */
+  releaseCredential: (credentialId: string): Promise<boolean> => {
+    return CircleModule.releaseCredential(credentialId);
+  },
+
+  /**
+   * Release an account from memory when it's no longer needed
+   * @param accountId The account ID to release
+   * @returns Promise resolving to a boolean indicating whether the account was found and released
+   */
+  releaseAccount: (accountId: string): Promise<boolean> => {
+    return CircleModule.releaseAccount(accountId);
   },
 
   /**

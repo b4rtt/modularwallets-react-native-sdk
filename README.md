@@ -8,6 +8,7 @@ A React Native wrapper for Circle's Modular Wallets SDK, enabling mobile applica
 - Smart account creation and management
 - Transaction operations
 - Support for multiple blockchain networks
+- Memory management for efficient resource usage
 
 ## Installation
 
@@ -80,6 +81,8 @@ const createSmartAccount = async (credential) => {
       credential
     );
     console.log('Smart account created:', account);
+    // Note: account.accountId is an internal reference ID, not the blockchain address
+    // The actual blockchain address is in account.address
     return account;
   } catch (error) {
     console.error('Error creating smart account:', error);
@@ -89,8 +92,9 @@ const createSmartAccount = async (credential) => {
 // Send a transaction
 const sendTransaction = async (account) => {
   try {
+    // Note: We use the accountId (internal reference) here, not the blockchain address
     const result = await CircleWallet.sendTransaction(
-      account.accountId,
+      account.accountId, // This is the internal reference ID, not the blockchain address
       '0x1234567890123456789012345678901234567890', // recipient address
       '0.01' // amount in ETH
     );
@@ -98,6 +102,19 @@ const sendTransaction = async (account) => {
     return result;
   } catch (error) {
     console.error('Error sending transaction:', error);
+  }
+};
+
+// Release resources when no longer needed
+const cleanup = async (credential, account) => {
+  // Release credential from memory
+  if (credential) {
+    await CircleWallet.releaseCredential(credential.credentialId);
+  }
+  
+  // Release account from memory
+  if (account) {
+    await CircleWallet.releaseAccount(account.accountId);
   }
 };
 ```
@@ -114,15 +131,34 @@ Logs in an existing user with passkey authentication.
 
 ### `createSmartAccount(clientKey: string, clientUrl: string, chain: string, credential: Credential): Promise<SmartAccount>`
 
-Creates a smart account for the user.
+Creates a smart account for the user. Returns an object containing:
+- `accountId`: Internal reference ID used by the plugin (not the blockchain address)
+- `address`: The actual blockchain address of the smart account
 
 ### `sendTransaction(accountId: string, to: string, value: string): Promise<TransactionResult>`
 
-Sends a transaction from the smart account.
+Sends a transaction from the smart account. The `accountId` parameter should be the internal reference ID returned from `createSmartAccount`, not the blockchain address.
+
+### `releaseCredential(credentialId: string): Promise<boolean>`
+
+Releases a credential from memory when it's no longer needed. Returns `true` if the credential was found and released, `false` otherwise.
+
+### `releaseAccount(accountId: string): Promise<boolean>`
+
+Releases an account from memory when it's no longer needed. Returns `true` if the account was found and released, `false` otherwise.
 
 ### `addEventListener(eventName: string, callback: (event: any) => void)`
 
 Adds an event listener for Circle events.
+
+## Memory Management
+
+The SDK stores references to credentials, accounts, and other resources in memory. To prevent memory leaks, it's recommended to release these resources when they're no longer needed:
+
+1. Call `releaseCredential(credentialId)` when you're done with a credential
+2. Call `releaseAccount(accountId)` when you're done with an account
+
+This is especially important in long-running applications or when creating multiple accounts.
 
 ## License
 

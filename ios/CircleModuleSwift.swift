@@ -92,7 +92,7 @@ class CircleModuleSwift: NSObject {
             do {
                 // Get the credential from storage
                 guard let credentialId = credential["credentialId"] as? String,
-                      let storedCredential = credentials[credentialId] else {
+                      let storedCredential = credentials[credentialId] as? WebAuthnCredential else {
                     throw NSError(domain: "CircleModule", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid credential"])
                 }
                 
@@ -148,7 +148,7 @@ class CircleModuleSwift: NSObject {
     
     // MARK: - Transactions
     
-    @objc func sendUserOperationWithAccountAddress(_ accountId: String,
+    @objc func sendUserOperationWithAccountId(_ accountId: String,
                                                  to: String,
                                                  value: String,
                                                  resolver: @escaping RCTPromiseResolveBlock,
@@ -162,24 +162,59 @@ class CircleModuleSwift: NSObject {
                 }
                 
                 // Parse value
-                let weiValue = UnitUtils.parseEtherToWei(value)
-                
-                // Send user operation
-                let hash = try await bundlerClient.sendUserOperation(
-                    account: account,
-                    calls: [
-                        EncodeCallDataArg(
-                            to: to,
-                            value: weiValue
-                        )
-                    ]
-                )
-                
-                // Return transaction hash
-                resolver(["hash": hash])
+                do {
+                    let weiValue = try UnitUtils.parseEtherToWei(value)
+                    
+                    // Send user operation
+                    let hash = try await bundlerClient.sendUserOperation(
+                        account: account,
+                        calls: [
+                            EncodeCallDataArg(
+                                to: to,
+                                value: weiValue
+                            )
+                        ]
+                    )
+                    
+                    // Return transaction hash
+                    resolver(["hash": hash])
+                } catch {
+                    rejecter("PARSE_VALUE_ERROR", "Failed to parse ETH value: \(error.localizedDescription)", error)
+                }
             } catch {
                 rejecter("SEND_OPERATION_ERROR", error.localizedDescription, error)
             }
         }
+    }
+    
+    // MARK: - Memory Management
+    
+    @objc func releaseCredential(_ credentialId: String,
+                               resolver: @escaping RCTPromiseResolveBlock,
+                               rejecter: @escaping RCTPromiseRejectBlock) {
+        if credentials[credentialId] != nil {
+            credentials.removeValue(forKey: credentialId)
+            resolver(true)
+        } else {
+            resolver(false)
+        }
+    }
+    
+    @objc func releaseAccount(_ accountId: String,
+                            resolver: @escaping RCTPromiseResolveBlock,
+                            rejecter: @escaping RCTPromiseRejectBlock) {
+        var removed = false
+        
+        if bundlerClients[accountId] != nil {
+            bundlerClients.removeValue(forKey: accountId)
+            removed = true
+        }
+        
+        if smartAccounts[accountId] != nil {
+            smartAccounts.removeValue(forKey: accountId)
+            removed = true
+        }
+        
+        resolver(removed)
     }
 } 
