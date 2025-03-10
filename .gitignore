@@ -1,0 +1,33 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+yarn-debug.log
+
+# TypeScript
+lib/
+*.tsbuildinfo
+
+# iOS
+ios/build/
+ios/Pods/
+ios/*.xcworkspace
+ios/*.xcodeproj
+ios/Podfile.lock
+
+# Android
+android/build/
+android/app/build/
+android/.gradle/
+android/local.properties
+android/*.iml
+android/.idea/
+android/.project
+android/.settings/
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/ 
