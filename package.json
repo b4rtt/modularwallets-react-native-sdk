@@ -1,13 +1,13 @@
 {
   "name": "modularwallets-react-native-sdk",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "React Native SDK for Circle's Modular Wallets",
   "main": "lib/commonjs/index.js",
   "module": "lib/module/index.js",
   "types": "lib/typescript/src/index.d.ts",
   "react-native": "src/index.tsx",
   "source": "src/index",
-  "type": "module",
+  "type": "commonjs",
   "files": [
     "src",
     "lib",
@@ -47,7 +47,7 @@
       "typescript"
     ]
   },
-  "app": {
+  "expo": {
     "plugins": [
       "./plugin/withCircleModularWallets.js"
     ]

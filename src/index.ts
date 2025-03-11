@@ -1,4 +1,4 @@
-import { NativeModules, Platform, NativeEventEmitter } from "react-native";
+import { NativeModules, NativeEventEmitter } from "react-native";
 
 // Type definitions
 export interface Credential {
@@ -12,7 +12,7 @@ export interface SmartAccount {
    * This is NOT the blockchain address, but a UUID used to look up the account in memory.
    */
   accountId: string;
-  
+
   /**
    * The actual blockchain address of the smart account.
    * This is the address that will appear on the blockchain.
@@ -25,7 +25,7 @@ export interface TransactionResult {
    * The user operation hash
    */
   hash: string;
-  
+
   /**
    * The actual transaction hash on the blockchain
    */
@@ -35,7 +35,9 @@ export interface TransactionResult {
 // Get the native module
 const CircleModule = NativeModules.CircleModule;
 if (!CircleModule) {
-  throw new Error("CircleModule is not available. Make sure the native module is properly linked.");
+  throw new Error(
+    "CircleModule is not available. Make sure the native module is properly linked."
+  );
 }
 
 // Create event emitter
@@ -79,7 +81,12 @@ const CircleWallet = {
     chain: string,
     credential: Credential
   ): Promise<SmartAccount> => {
-    return CircleModule.createSmartAccount(clientKey, clientUrl, chain, credential);
+    return CircleModule.createSmartAccount(
+      clientKey,
+      clientUrl,
+      chain,
+      credential
+    );
   },
 
   /**
@@ -140,7 +147,7 @@ const CircleWallet = {
    */
   addEventListener: (eventName: string, callback: (event: any) => void) => {
     return eventEmitter.addListener(eventName, callback);
-  }
+  },
 };
 
-export default CircleWallet; 
+export default CircleWallet;
