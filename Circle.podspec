@@ -116,9 +116,4 @@ EOL
     # Install xcodeproj gem if needed
     gem list -i xcodeproj > /dev/null || gem install xcodeproj
   CMD
-  
-  # Add post_install hook to run the script
-  s.post_install do |installer|
-    system("cd #{installer.sandbox.pod_root}/../../ && ruby ios/add_circle_sdk.rb")
-  end
 end

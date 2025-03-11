@@ -1,0 +1,30 @@
+require_relative '../node_modules/react-native/scripts/react_native_pods'
+require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
+
+platform :ios, '16.0'
+
+target 'YourAppName' do
+  config = use_native_modules!
+  use_react_native!(
+    :path => config[:reactNativePath],
+    :hermes_enabled => false
+  )
+
+  # Add any other pods your app needs here
+  pod 'Circle', :path => '../'
+
+  post_install do |installer|
+    # Run the Circle SDK integration script
+    system("cd #{installer.sandbox.pod_root}/../../ && ruby ios/add_circle_sdk.rb")
+    
+    # Standard React Native configuration
+    react_native_post_install(installer)
+    
+    # iOS deployment target configuration
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
+      end
+    end
+  end
+end 
