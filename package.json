@@ -1,6 +1,6 @@
 {
   "name": "modularwallets-react-native-sdk",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "modularwallets-react-native-sdk",
   "license": "MIT",
   "main": "lib/index.js",
@@ -43,7 +43,9 @@
   "expo": {
     "name": "modularwallets-react-native-sdk",
     "version": "1.0.1",
-    "platforms": ["ios"],
+    "platforms": [
+      "ios"
+    ],
     "plugin": "./plugin"
   }
 }
