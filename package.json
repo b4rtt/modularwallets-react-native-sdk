@@ -1,7 +1,7 @@
 {
-  "name": "react-native-circle",
-  "version": "1.0.0",
-  "description": "Circle react native",
+  "name": "modularwallets-react-native-sdk",
+  "version": "1.0.1",
+  "description": "modularwallets-react-native-sdk",
   "license": "MIT",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -29,5 +29,12 @@
     "react": "*",
     "react-native": "*"
   },
-  "author": "b4rtt"
+  "author": "b4rtt",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/b4rtt/modularwallets-react-native-sdk"
+  },
+  "bugs": {
+    "url": "https://github.com/b4rtt/modularwallets-react-native-sdk/issues"
+  }
 }
