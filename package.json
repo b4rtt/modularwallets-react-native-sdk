@@ -13,7 +13,9 @@
   },
   "keywords": [
     "circle",
-    "react-native"
+    "react-native",
+    "expo",
+    "expo-plugin"
   ],
   "dependencies": {
     "prop-types": "^15.8.1"
@@ -23,7 +25,8 @@
     "react-native": "^0.69.0",
     "@types/react": "^18.0.0",
     "@types/react-native": "^0.69.0",
-    "typescript": "^4.7.4"
+    "typescript": "^4.7.4",
+    "@expo/config-plugins": "^7.0.0"
   },
   "peerDependencies": {
     "react": "*",
@@ -36,5 +39,11 @@
   },
   "bugs": {
     "url": "https://github.com/b4rtt/modularwallets-react-native-sdk/issues"
+  },
+  "expo": {
+    "name": "modularwallets-react-native-sdk",
+    "version": "1.0.1",
+    "platforms": ["ios"],
+    "plugin": "./plugin"
   }
 }

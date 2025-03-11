@@ -10,6 +10,7 @@ A React Native wrapper for Circle's Modular Wallets SDK, enabling mobile applica
 - USDC transfers with built-in contract addresses
 - Support for Polygon and Polygon Amoy networks
 - Memory management for efficient resource usage
+- **Zero-configuration** Swift Package Manager integration
 
 ## Installation
 
@@ -21,7 +22,9 @@ npm install modularwallets-react-native-sdk
 yarn add modularwallets-react-native-sdk
 ```
 
-### iOS Setup
+## Setup
+
+### React Native Setup (without Expo)
 
 1. Make sure your iOS deployment target is set to iOS 16.0 or higher in your Podfile:
 
@@ -35,9 +38,103 @@ platform :ios, '16.0'
 cd ios && pod install
 ```
 
+That's it! No need to manually open Xcode or add dependencies - everything is handled automatically. The Circle SDK is integrated via Swift Package Manager during the pod installation process.
+
+### Expo Setup
+
+If you're using Expo, this package includes a config plugin that will automatically:
+
+1. Set the iOS deployment target to 16.0
+2. Configure Swift Package Manager for the Circle SDK
+3. Add Face ID usage description to Info.plist
+4. Integrate the Circle SDK into your Xcode project
+
+To use the plugin, add it to your `app.json` or `app.config.js`:
+
+```json
+{
+  "expo": {
+    "plugins": [
+      "modularwallets-react-native-sdk"
+    ]
+  }
+}
+```
+
+#### Option 1: Local Development Build (Recommended)
+
+This approach creates a development build locally on your machine without requiring an Expo account:
+
+```bash
+# Install expo-dev-client
+npx expo install expo-dev-client
+
+# Generate native code
+npx expo prebuild
+
+# Run on iOS simulator
+npx expo run:ios
+
+# OR for a physical device (requires Xcode)
+npx expo run:ios --device
+```
+
+#### Option 2: Using EAS Build
+
+If you prefer using Expo's cloud build service:
+
+```bash
+# Install expo-dev-client
+npx expo install expo-dev-client
+
+# Install EAS CLI if you haven't already
+npm install -g eas-cli
+
+# Log in to your Expo account
+eas login
+
+# Create a development build
+eas build --profile development --platform ios
+```
+
+If using EAS, add this configuration to your `eas.json`:
+
+```json
+{
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "resourceClass": "m-medium"
+      }
+    },
+    "development-simulator": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": true,
+        "resourceClass": "m-medium"
+      }
+    }
+  }
+}
+```
+
 ### Android Setup (Coming Soon)
 
 Android support is planned for a future release.
+
+## How It Works
+
+This package automatically integrates the Circle Modular Wallets SDK using Swift Package Manager without requiring any manual configuration:
+
+1. During installation, it creates the necessary Swift Package Manager configuration
+2. It adds the Circle SDK GitHub repository as a Swift Package dependency
+3. It integrates the package into your Xcode project
+4. It ensures all dependencies are properly resolved
+
+All of this happens automatically when you run `pod install` (React Native) or `npx expo prebuild` (Expo).
 
 ## User Flow Overview
 
@@ -240,6 +337,72 @@ This is especially important in long-running applications or when creating multi
 - Each transaction requires biometric authentication
 - Transactions are processed on the blockchain and may take time to confirm
 - Gas fees are covered by the Circle paymaster, so users don't need to worry about having MATIC for gas
+
+## Troubleshooting
+
+### Build Issues
+
+If you encounter build issues:
+
+1. Make sure your iOS deployment target is set to 16.0 or higher
+2. Try cleaning your build:
+   ```bash
+   # For React Native
+   cd ios && pod deintegrate && pod install
+   
+   # For Expo
+   npx expo prebuild --clean
+   ```
+3. Check that the Ruby gem 'xcodeproj' is installed:
+   ```bash
+   gem install xcodeproj
+   ```
+
+### Swift Package Manager Issues
+
+If you see errors related to Swift Package Manager:
+
+1. The package might be temporarily unavailable. Try again later.
+2. Check your internet connection - Swift Package Manager needs to download the package.
+3. If the issue persists, you can manually add the package in Xcode:
+   ```bash
+   open ios/YourProject.xcworkspace
+   ```
+   Then in Xcode: File > Add Package Dependencies > Enter "https://github.com/circlefin/modularwallets-ios-sdk.git"
+
+### iOS Deployment Target Issues
+
+If you see an error about the minimum deployment target:
+
+```
+Specs satisfying the dependency were found, but they required a higher minimum deployment target.
+```
+
+Make sure your iOS deployment target is set to 16.0 or higher in your Podfile:
+
+```ruby
+platform :ios, '16.0'
+```
+
+### Expo Users
+
+If you're using Expo and encounter issues:
+
+1. Make sure you're using a development build, not Expo Go (which doesn't support native modules)
+2. Verify that the plugin is correctly added to your app.json
+3. For local builds, try cleaning the project:
+   ```bash
+   npx expo prebuild --clean
+   ```
+4. For EAS builds, check your EAS build logs for specific errors
+
+### Face ID/Touch ID Issues
+
+If biometric authentication isn't working:
+
+1. Make sure your app has the proper permissions in Info.plist
+2. For simulator testing, enable Face ID in Features menu: Features > Face ID > Enrolled
+3. For physical devices, ensure biometrics are set up on the device
 
 ## License
 
