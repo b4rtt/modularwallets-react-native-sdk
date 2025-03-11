@@ -1,51 +1,55 @@
 {
   "name": "modularwallets-react-native-sdk",
-  "version": "1.0.3",
-  "description": "modularwallets-react-native-sdk",
-  "license": "MIT",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
-  "nativePackage": true,
+  "version": "1.0.4",
+  "description": "React Native SDK for Circle's Modular Wallets",
+  "main": "lib/commonjs/index.js",
+  "module": "lib/module/index.js",
+  "types": "lib/typescript/src/index.d.ts",
+  "react-native": "src/index.tsx",
+  "source": "src/index",
+  "type": "module",
+  "files": [
+    "src",
+    "lib",
+    "ios",
+    "plugin",
+    "Circle.podspec"
+  ],
   "scripts": {
-    "build": "tsc",
-    "prepare": "npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "bob build",
+    "prepare": "bob build"
   },
   "keywords": [
-    "circle",
     "react-native",
-    "expo",
-    "expo-plugin"
+    "ios",
+    "circle",
+    "wallet",
+    "blockchain"
   ],
-  "dependencies": {
-    "prop-types": "^15.8.1"
-  },
-  "devDependencies": {
-    "react": "^18.2.0",
-    "react-native": "^0.69.0",
-    "@types/react": "^18.0.0",
-    "@types/react-native": "^0.69.0",
-    "typescript": "^4.7.4",
-    "@expo/config-plugins": "^7.0.0"
-  },
+  "author": "Circle Internet Financial",
+  "license": "MIT",
   "peerDependencies": {
     "react": "*",
     "react-native": "*"
   },
-  "author": "b4rtt",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/b4rtt/modularwallets-react-native-sdk"
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-native": "^0.72.0",
+    "react-native-builder-bob": "^0.20.0",
+    "typescript": "^5.0.0"
   },
-  "bugs": {
-    "url": "https://github.com/b4rtt/modularwallets-react-native-sdk/issues"
+  "react-native-builder-bob": {
+    "source": "src",
+    "output": "lib",
+    "targets": [
+      "commonjs",
+      "module",
+      "typescript"
+    ]
   },
-  "expo": {
-    "name": "modularwallets-react-native-sdk",
-    "version": "1.0.1",
-    "platforms": [
-      "ios"
-    ],
-    "plugin": "./plugin"
+  "app": {
+    "plugins": [
+      "./plugin/withCircleModularWallets.js"
+    ]
   }
 }

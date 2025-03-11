@@ -1,6 +1,10 @@
-const { withDangerousMod, withInfoPlist, withXcodeProject } = require('@expo/config-plugins');
-const fs = require('fs');
-const path = require('path');
+const {
+  withDangerousMod,
+  withInfoPlist,
+  withXcodeProject,
+} = require("@expo/config-plugins");
+const fs = require("fs");
+const path = require("path");
 
 /**
  * Config plugin for Circle Modular Wallets SDK
@@ -13,90 +17,85 @@ const path = require('path');
 const withCircleModularWallets = (config) => {
   // Step 1: Ensure iOS deployment target is set to 16.0
   if (!config.ios) config.ios = {};
-  config.ios.deploymentTarget = '16.0';
-  
+  config.ios.deploymentTarget = "16.0";
+
   // Step 2: Add Face ID usage description to Info.plist
   config = withInfoPlist(config, (config) => {
     const infoPlist = config.modResults;
-    
+
     // Add Face ID usage description if not already present
     if (!infoPlist.NSFaceIDUsageDescription) {
-      infoPlist.NSFaceIDUsageDescription = 'This app uses Face ID to authenticate wallet transactions';
+      infoPlist.NSFaceIDUsageDescription =
+        "This app uses Face ID to authenticate wallet transactions";
     }
-    
+
     return config;
   });
-  
+
   // Step 3: Modify Podfile to ensure iOS 16.0
   config = withDangerousMod(config, [
-    'ios',
+    "ios",
     async (config) => {
-      const podfilePath = path.join(config.modRequest.platformProjectRoot, 'Podfile');
-      
+      const podfilePath = path.join(
+        config.modRequest.platformProjectRoot,
+        "Podfile"
+      );
+
       if (fs.existsSync(podfilePath)) {
-        let podfileContent = fs.readFileSync(podfilePath, 'utf8');
-        
+        let podfileContent = fs.readFileSync(podfilePath, "utf8");
+
         // Ensure iOS platform is set to 16.0
         podfileContent = podfileContent.replace(
           /platform :ios, ['"].*['"]/,
-          'platform :ios, \'16.0\''
+          "platform :ios, '16.0'"
         );
-        
-        // Add post_install hook to install xcodeproj gem if needed
-        if (!podfileContent.includes('gem install xcodeproj')) {
-          const postInstallHook = `
-post_install do |installer|
-  # Install xcodeproj gem if needed for Circle SDK integration
-  system('gem list -i xcodeproj > /dev/null || gem install xcodeproj')
-  
-  # Run Circle SDK integration script if it exists
-  circle_script_path = 'ios/add_circle_sdk.rb'
-  if File.exist?(circle_script_path)
-    system("ruby \#{circle_script_path}")
-  end
-  
-  # Standard post-install configuration
-  installer.pods_project.targets.each do |target|
-    target.build_configurations.each do |config|
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
-    end
-  end
-end`;
-          
-          // Check if there's already a post_install hook
-          if (podfileContent.includes('post_install do |installer|')) {
-            // Replace existing post_install hook
-            podfileContent = podfileContent.replace(
-              /post_install do \|installer\|.*?end/ms,
-              postInstallHook
-            );
-          } else {
-            // Add new post_install hook
-            podfileContent += "\n" + postInstallHook + "\n";
-          }
+
+        // Add Circle pod
+        if (!podfileContent.includes("pod 'Circle'")) {
+          const podLine =
+            "  pod 'Circle', :path => '../node_modules/modularwallets-react-native-sdk'\n";
+          podfileContent = podfileContent.replace(
+            /target .* do/,
+            `$&\n${podLine}`
+          );
         }
-        
+
+        // Add post_install hook if not present
+        if (!podfileContent.includes("post_install do |installer|")) {
+          podfileContent += `\n  post_install do |installer|
+    # Run Circle SDK integration script
+    system("cd \#{installer.sandbox.pod_root}/../../ && ruby ios/add_circle_sdk.rb")
+    
+    # iOS deployment target configuration
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
+      end
+    end
+  end\n`;
+        }
+
         fs.writeFileSync(podfilePath, podfileContent);
       }
-      
+
       return config;
     },
   ]);
-  
+
   // Step 4: Add Swift Package Manager configuration for Circle SDK
   config = withDangerousMod(config, [
-    'ios',
+    "ios",
     async (config) => {
       const iosDir = config.modRequest.platformProjectRoot;
-      
+
       // Create a directory for the Swift Package Manager configuration
-      const spmConfigDir = path.join(iosDir, 'CircleSDK');
+      const spmConfigDir = path.join(iosDir, "CircleSDK");
       if (!fs.existsSync(spmConfigDir)) {
         fs.mkdirSync(spmConfigDir, { recursive: true });
       }
-      
+
       // Create Package.swift file
-      const packageSwiftPath = path.join(spmConfigDir, 'Package.swift');
+      const packageSwiftPath = path.join(spmConfigDir, "Package.swift");
       const packageSwiftContent = `// swift-tools-version:5.5
 import PackageDescription
 
@@ -121,9 +120,9 @@ let package = Package(
 )
 `;
       fs.writeFileSync(packageSwiftPath, packageSwiftContent);
-      
+
       // Create a dummy Swift file to make the package valid
-      const dummySwiftPath = path.join(spmConfigDir, 'CircleSDK.swift');
+      const dummySwiftPath = path.join(spmConfigDir, "CircleSDK.swift");
       const dummySwiftContent = `// This file is required for the Swift Package Manager
 import Foundation
 import CircleModularWalletsCore
@@ -133,9 +132,9 @@ public struct CircleSDK {
 }
 `;
       fs.writeFileSync(dummySwiftPath, dummySwiftContent);
-      
+
       // Create Ruby script to add Swift Package to Xcode project
-      const rubyScriptPath = path.join(iosDir, 'add_circle_sdk.rb');
+      const rubyScriptPath = path.join(iosDir, "add_circle_sdk.rb");
       const rubyScriptContent = `#!/usr/bin/env ruby
 require 'xcodeproj'
 
@@ -179,45 +178,50 @@ project.save
 puts "Successfully updated Xcode project"
 `;
       fs.writeFileSync(rubyScriptPath, rubyScriptContent);
-      
+
       // Make the script executable
       try {
-        fs.chmodSync(rubyScriptPath, '755');
+        fs.chmodSync(rubyScriptPath, "755");
       } catch (error) {
-        console.warn('Could not make script executable:', error);
+        console.warn("Could not make script executable:", error);
       }
-      
+
       return config;
     },
   ]);
-  
+
   // Step 5: Use withXcodeProject to add a build script that runs our Ruby script
   config = withXcodeProject(config, async (config) => {
     const xcodeProject = config.modResults;
     const appTarget = xcodeProject.getFirstTarget();
-    
+
     if (appTarget) {
       // Check if we already have a script phase for Circle SDK
       const existingScriptPhase = appTarget.buildPhases.find(
-        (phase) => phase.isa === 'PBXShellScriptBuildPhase' && phase.name === 'Integrate Circle SDK'
+        (phase) =>
+          phase.isa === "PBXShellScriptBuildPhase" &&
+          phase.name === "Integrate Circle SDK"
       );
-      
+
       if (!existingScriptPhase) {
         // Add a script phase to run our Ruby script
         xcodeProject.addBuildPhase(
           [],
-          'PBXShellScriptBuildPhase',
-          'Integrate Circle SDK',
+          "PBXShellScriptBuildPhase",
+          "Integrate Circle SDK",
           appTarget,
-          { shellPath: '/bin/sh', shellScript: 'ruby "${SRCROOT}/add_circle_sdk.rb"' }
+          {
+            shellPath: "/bin/sh",
+            shellScript: 'ruby "${SRCROOT}/add_circle_sdk.rb"',
+          }
         );
       }
     }
-    
+
     return config;
   });
-  
+
   return config;
 };
 
-module.exports = withCircleModularWallets; 
+module.exports = withCircleModularWallets;
